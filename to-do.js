@@ -1,69 +1,74 @@
- const addbutton=document.getElementById("add");
-            const taskinput=document.getElementById("to-do");
-            const tasklist=document.getElementById("list");
-           
+const addbutton = document.getElementById("add");
+const taskinput = document.getElementById("to-do");
+const tasklist = document.getElementById("list");
 
-            function addtask(){
-                const task= taskinput.value.trim();
-                if(task){
-                    createtaskElement(task);
-                    taskinput.value="";
-                    savetasks();
-                }
-                else{
-                    alert("Please enter a task");
-                }
+// Add task
+function addtask() {
+  const task = taskinput.value.trim();
+  if (task) {
+    const newTask = { text: task, completed: false };
+    createtaskElement(newTask);
+    saveTask(newTask);
+    taskinput.value = "";
+  } else {
+    alert("Please enter a task");
+  }
+}
+addbutton.addEventListener("click", addtask);
 
-                
-            }
-           
-            addbutton.addEventListener("click",addtask);
+// Create task element (applies inline line-through when completed)
+function createtaskElement(taskObj) {
+  const lists = document.createElement("li");
 
-            const createtaskElement=(task) => {
-            const lists= document.createElement('li');
-           
-
-            // text span
   const taskText = document.createElement("span");
-  taskText.textContent = task;
+  taskText.textContent = taskObj.text;
+  if (taskObj.completed) {
+    taskText.style.textDecoration = "line-through";
+  }
 
-  //  complete button
   const completeBtn = document.createElement("button");
   completeBtn.textContent = "✔";
-  completeBtn.style.marginLeft = "10px";
   completeBtn.addEventListener("click", () => {
-    taskText.style.textDecoration =
-      taskText.style.textDecoration === "line-through" ? "none" : "line-through";
+    const isDone = taskText.style.textDecoration === "line-through";
+    taskText.style.textDecoration = isDone ? "none" : "line-through";
+    updateTasks();
   });
 
-  //  delete button
   const deleteBtn = document.createElement("button");
   deleteBtn.textContent = "✖";
-  deleteBtn.style.marginLeft = "10px";
   deleteBtn.addEventListener("click", () => {
     lists.remove();
+    updateTasks();
   });
 
   lists.appendChild(taskText);
   lists.appendChild(completeBtn);
   lists.appendChild(deleteBtn);
-
-
-            tasklist.appendChild(lists);
+  tasklist.appendChild(lists);
 }
 
-
-function savetasks(){
-    let tasks=[];
-    tasklist.querySelectorAll("li span").forEach (function(item) {
-        tasks.push(item.textContent.trim());
-});
-
-localStorage.setItem("tasks",JSON.stringify(tasks));
+// Save a single new task
+function saveTask(taskObj) {
+  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  tasks.push(taskObj);
+  localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-function loadtasks(){
-    const tasks=JSON.parse(localStorage.getItem("tasks"))||[];
-    tasks.forEach(createtaskElement);}
+// Rebuild storage from current DOM (after complete/delete)
+function updateTasks() {
+  const tasks = [];
+  tasklist.querySelectorAll("li").forEach((li) => {
+    const span = li.querySelector("span");
+    const text = span.textContent.trim();
+    const completed = span.style.textDecoration === "line-through";
+    tasks.push({ text, completed });
+  });
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
 
-     loadtasks();
+// Load tasks on page start
+function loadtasks() {
+  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  tasks.forEach(createtaskElement);
+}
+loadtasks();
